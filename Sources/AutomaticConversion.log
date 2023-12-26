@@ -1,0 +1,4 @@
+CSelectOnRunTime.pas Note: Codificação alterada de cp1252 para UTF-8
+CSelectOnRunTime.pas Note: Unidade "Windows" substituída com "LCLIntf, LCLType, LMessages" na seção "uses".
+CSelectOnRunTime.pas(27,23) Note: Adicionado "MODE" modificador de sintaxe Delphi após o nome da unidade.
+ : Conversão Pronta.
