@@ -27,7 +27,7 @@ german_ral@hotmail.com
 unit CSelectOnRunTime;
 
 {$IFDEF FPC}
-  {$MODE Delphi}
+  {$MODE objfpc}
 {$ENDIF}
 
 {
@@ -91,9 +91,12 @@ uses
 {$ELSE}
   LCLIntf, LCLType, LMessages,
 {$ENDIF}
-  Controls, Messages, SysUtils, Classes, ExtCtrls, Graphics, Contnrs;
+  Controls, Messages, SysUtils, Classes, ExtCtrls, Graphics, fgl;
 
 type
+
+  TObjectList = specialize TFPGObjectList<TObject>;
+
 
   //: Ampliación de la clase.
   TExtControl = class(TControl);
@@ -378,7 +381,7 @@ begin
     // Nos quedamos con la antigua
     _OldOwnerResize := TExtControl(Self._Owner).OnResize;
     // La nueva
-    TExtControl(Self._Owner).OnResize := OwnerResize;
+    TExtControl(Self._Owner).OnResize := @OwnerResize;
   end;
 
   // otras propiedades por defecto
@@ -391,7 +394,7 @@ begin
   // Self.FVersion := 'v1.4 - by Germán Estévez';
 
   // Lista de nodos
-  _Nodes := TObjectList.Create(False);
+  _Nodes := TObjectList.Create(True);
   // Crearlos
   CreateNodes;
 end;
@@ -402,50 +405,57 @@ var
   Node: Integer;
   Panel: TPanel;
 begin
-  // Para las 8 Marcas.
-  for Node := 0 to 7 do  begin
-    // Crear un panel
-    Panel := TPanel.Create(nil);
-    // Añadirlo
-    _Nodes.Add(Panel);
-    // Para cada uno
-    with Panel do  begin
+  Node:=0;
+    Panel := nil;
+    try
+    // Para las 8 Marcas.
+    for Node := 0 to 7 do  begin
+      // Crear un panel
+      Panel := TPanel.Create(nil);
+      // Añadirlo
+      _Nodes.Add(Panel);
+      // Para cada uno
+      with Panel do  begin
 
-      // No marcas en 3D?
-      if not (Self.FMarkers3D) then begin
-        BevelOuter := bvNone;
-      end;
-      // Otras
-      Color := FMarkColor;
-      Brush.Color := FMarkColor;
-      Name := 'Node' + IntToStr(Node);
-      Width := MARK_WIDTH{4}{5};
-      Height := MARK_WIDTH{4}{5};
-      Parent := TWinControl(Self._Owner);
-      Visible := False;
+        // No marcas en 3D?
+        if not (Self.FMarkers3D) then begin
+          BevelOuter := bvNone;
+        end;
+        // Otras
+        Color := FMarkColor;
+        Brush.Color := FMarkColor;
+        Name := 'Node' + node.ToString;
+        Width := MARK_WIDTH{4}{5};
+        Height := MARK_WIDTH{4}{5};
+        Parent := TWinControl(Self._Owner);
+        Visible := False;
 
-      // Segun el nodo
-      case Node of
-        0,4: Cursor := crSizeNWSE;
-        1,5: Cursor := crSizeNS;
-        2,6: Cursor := crSizeNESW;
-        3,7: Cursor := crSizeWE;
+        // Segun el nodo
+        case Node of
+          0,4: Cursor := crSizeNWSE;
+          1,5: Cursor := crSizeNS;
+          2,6: Cursor := crSizeNESW;
+          3,7: Cursor := crSizeWE;
+        end;
+        // Asignar eventos
+        OnMouseDown := @NodeMouseDown;
+        OnMouseMove := @NodeMouseMove;
+        OnMouseUp := @NodeMouseUp;
       end;
-      // Asignar eventos
-      OnMouseDown := NodeMouseDown;
-      OnMouseMove := NodeMouseMove;
-      OnMouseUp := NodeMouseUp;
     end;
-  end;
+    finally
+      Panel := nil;
+    end;
 
 end;
 
 //: Destructor de la clase
 destructor TSelectOnRunTime.Destroy;
 begin
+  FreeAndNil(_Nodes);
+  FreeAndNil(  _CurrentNodeControl );
 
-  // Liberar objetos creados
-  _Nodes.Free;
+  _Owner:=nil;
   // métopdo heredado
   inherited;
 
@@ -858,10 +868,10 @@ begin
   _OldResize := TExtControl(Self.FSelectControl).OnResize;
 
   // "Cach" del evento
-  TExtControl(Self.FSelectControl).OnMouseDown := ControlMouseDown;
-  TExtControl(Self.FSelectControl).OnMouseMove := ControlMouseMove;
-  TExtControl(Self.FSelectControl).OnMouseUp := ControlMouseUp;
-  TExtControl(Self.FSelectControl).OnResize := ControlResize;
+  TExtControl(Self.FSelectControl).OnMouseDown := @ControlMouseDown;
+  TExtControl(Self.FSelectControl).OnMouseMove := @ControlMouseMove;
+  TExtControl(Self.FSelectControl).OnMouseUp := @ControlMouseUp;
+  TExtControl(Self.FSelectControl).OnResize := @ControlResize;
 
 end;
 
